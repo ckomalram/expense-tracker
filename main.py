@@ -4,6 +4,7 @@ from datetime import datetime
 
 EXPENSE_FILE = "expenses.json"
 
+# Utils Methods
 def load_expenses():
     try:
         with open(EXPENSE_FILE, 'r') as file:
@@ -18,6 +19,7 @@ def save_expenses(expenses):
     with open(EXPENSE_FILE, 'w') as file:
         json.dump(expenses, file)
 
+# Crud Methods
 def add_expense(description, amount):
     expenses = load_expenses()
     new_expense = {
@@ -37,6 +39,28 @@ def list_expenses():
     for expense in expenses:
         print(f" {expense['id']}   \t{expense['date']}  \t{expense['description']}       \t\t\t\t${expense['amount']}")
 
+def update_expense(expense_id , description=None, amount=None):
+    expenses = load_expenses()
+    for expense in expenses:
+        if(expense['id'] == expense_id):
+            if description:
+                expense['description'] = description
+            if amount:
+                expense['amount'] = amount
+            save_expenses(expenses)
+            print(f'Expense updated successfully (ID: {expense_id})')
+            return
+    print(f'Not found expense (ID: {expense_id})')
+
+def delete_expense(expense_id):
+    expenses = load_expenses()
+    refresh_expenses = [expense for expense in expenses if expense['id']!= expense_id]
+    if len(expenses) == len(refresh_expenses):
+        print(f'Not found expense (ID: {expense_id})')
+    else:
+        save_expenses(refresh_expenses)
+        print(f'Expense delete successfully (ID: {expense_id})')  
+    
 def run():
     parser = argparse.ArgumentParser(description='Expense Tracker Project')
     subparsers = parser.add_subparsers(dest='command')
@@ -44,22 +68,35 @@ def run():
     # Subacommands to add an new expense
     add_parser = subparsers.add_parser('add', help="Add an new expense")
     add_parser.add_argument('-d', '--description', required=True, help="Description of the expense")
-    add_parser.add_argument('-a','--amount', required=True, help="Amount of the expense" )
+    add_parser.add_argument('-a','--amount', required=True,type=float, help="Amount of the expense" )
 
-    list_parser = subparsers.add_parser('list', help="List all expenses")
+    # Subcmd to list expenses
+    subparsers.add_parser('list', help="List all expenses")
 
+    # Subcmd to update an expense
+    update_parser = subparsers.add_parser('update', help="Update an expense")
+    update_parser.add_argument('--id',required=True, type=int, help="Id of expense")
+    update_parser.add_argument('--description',help="Description of the expense")
+    update_parser.add_argument('--amount', type=float, help="Amount of the expense" )
+
+    # Subcmd to delete an expense
+    delete_parser = subparsers.add_parser('delete', help="delete an expense")
+    delete_parser.add_argument('--id',required=True, type=int, help="Id of expense")
 
     args = parser.parse_args()
 
     if args.command == 'add':
-        print('We need to add an expense')
         print(args.description)
         print(args.amount)
         add_expense(args.description, args.amount)
     elif args.command == 'list':
-        print('We need to list all expenses')
         list_expenses()
-
+    elif args.command == 'update':
+        update_expense(args.id, args.description, args.amount)        
+    elif args.command == 'delete':
+        delete_expense(args.id)
+# Resumen de gastos 
+# Resumen de gastos por mes
 
 if __name__ == '__main__':
     run()
