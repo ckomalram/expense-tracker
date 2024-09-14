@@ -60,7 +60,26 @@ def delete_expense(expense_id):
     else:
         save_expenses(refresh_expenses)
         print(f'Expense delete successfully (ID: {expense_id})')  
-    
+
+def summary_expenses(month= None):
+    expenses = load_expenses()
+    print(type(month))
+
+
+    if month:
+        totalAmountList = [expense['amount'] for expense in expenses if get_expense_month(expense) == month]
+        totalSum = sum(totalAmountList)
+        print(f'Total Expenses for Month:  {totalSum}')
+    else:
+        totalAmountList = [expense['amount'] for expense in expenses]
+        totalSum = sum(totalAmountList)
+        print(f'Total Expenses:  {totalSum}')
+
+def get_expense_month(expense):
+    expenseDate = expense['date']
+    formatDate = datetime.strptime(expenseDate, '%Y-%m-%d')
+    return formatDate.month
+
 def run():
     parser = argparse.ArgumentParser(description='Expense Tracker Project')
     subparsers = parser.add_subparsers(dest='command')
@@ -83,6 +102,10 @@ def run():
     delete_parser = subparsers.add_parser('delete', help="delete an expense")
     delete_parser.add_argument('--id',required=True, type=int, help="Id of expense")
 
+    # Subcmd to summary general and by month
+    summary_parser = subparsers.add_parser('summary', help="show summary of expenses")
+    summary_parser.add_argument('-m', '--month',type=int,help='argument to show summary by month')
+
     args = parser.parse_args()
 
     if args.command == 'add':
@@ -95,6 +118,8 @@ def run():
         update_expense(args.id, args.description, args.amount)        
     elif args.command == 'delete':
         delete_expense(args.id)
+    elif args.command == 'summary':
+        summary_expenses(args.month)
 # Resumen de gastos 
 # Resumen de gastos por mes
 
