@@ -19,27 +19,41 @@ def save_expenses(expenses):
     with open(EXPENSE_FILE, 'w') as file:
         json.dump(expenses, file)
 
+def print_expenses(expenses):
+        print("#ID  \tDate       \tDescription   \t\t\t\tCategory  \t\t\t\tAmount")
+        for expense in expenses:
+            print(f" {expense['id']}   \t{expense['date']}  \t{expense['description']}       \t\t\t\t{expense['category']}       \t\t\t\t${expense['amount']}")
+
+def get_expense_month(expense):
+    expenseDate = expense['date']
+    formatDate = datetime.strptime(expenseDate, '%Y-%m-%d')
+    return formatDate.month
+
+
 # Crud Methods
-def add_expense(description, amount):
+def add_expense(description, amount, category= "general"):
     expenses = load_expenses()
     new_expense = {
         'id': len(expenses) + 1,
         'date': datetime.now().strftime('%Y-%m-%d'),
         'description': description,
-        'amount': amount
+        'amount': amount,
+        'category': category
     }
 
     expenses.append(new_expense)
     save_expenses(expenses)
     print(f"Created! (ID: {new_expense['id']})")
 
-def list_expenses():
+def list_expenses(category= None):
     expenses = load_expenses()
-    print("#ID  \tDate       \tDescription  \t\t\t\tAmount")
-    for expense in expenses:
-        print(f" {expense['id']}   \t{expense['date']}  \t{expense['description']}       \t\t\t\t${expense['amount']}")
+    if category:
+        filtered_expenses = [expense for expense in expenses if expense['category'] == category]
+        print_expenses(filtered_expenses)
+    else:
+        print_expenses(expenses)
 
-def update_expense(expense_id , description=None, amount=None):
+def update_expense(expense_id , description=None, amount=None, category=None):
     expenses = load_expenses()
     for expense in expenses:
         if(expense['id'] == expense_id):
@@ -47,6 +61,8 @@ def update_expense(expense_id , description=None, amount=None):
                 expense['description'] = description
             if amount:
                 expense['amount'] = amount
+            if category:
+                expense['category'] = category                
             save_expenses(expenses)
             print(f'Expense updated successfully (ID: {expense_id})')
             return
@@ -73,11 +89,6 @@ def summary_expenses(month= None):
         totalSum = sum(totalAmountList)
         print(f'Total Expenses:  {totalSum}')
 
-def get_expense_month(expense):
-    expenseDate = expense['date']
-    formatDate = datetime.strptime(expenseDate, '%Y-%m-%d')
-    return formatDate.month
-
 def run():
     parser = argparse.ArgumentParser(description='Expense Tracker Project')
     subparsers = parser.add_subparsers(dest='command')
@@ -86,15 +97,19 @@ def run():
     add_parser = subparsers.add_parser('add', help="Add an new expense")
     add_parser.add_argument('-d', '--description', required=True, help="Description of the expense")
     add_parser.add_argument('-a','--amount', required=True,type=float, help="Amount of the expense" )
+    add_parser.add_argument('-c','--category',default="general",help="category of the expense" )
 
     # Subcmd to list expenses
-    subparsers.add_parser('list', help="List all expenses")
+    list_parser = subparsers.add_parser('list', help="List all expenses")
+    list_parser.add_argument('-c','--category',help="filter by category of the expense" )
 
     # Subcmd to update an expense
     update_parser = subparsers.add_parser('update', help="Update an expense")
     update_parser.add_argument('--id',required=True, type=int, help="Id of expense")
     update_parser.add_argument('--description',help="Description of the expense")
     update_parser.add_argument('--amount', type=float, help="Amount of the expense" )
+    update_parser.add_argument('--category',help="category of the expense" )
+
 
     # Subcmd to delete an expense
     delete_parser = subparsers.add_parser('delete', help="delete an expense")
@@ -107,13 +122,11 @@ def run():
     args = parser.parse_args()
 
     if args.command == 'add':
-        print(args.description)
-        print(args.amount)
-        add_expense(args.description, args.amount)
+        add_expense(args.description, args.amount, args.category)
     elif args.command == 'list':
-        list_expenses()
+        list_expenses(args.category)
     elif args.command == 'update':
-        update_expense(args.id, args.description, args.amount)        
+        update_expense(args.id, args.description, args.amount, args.category)        
     elif args.command == 'delete':
         delete_expense(args.id)
     elif args.command == 'summary':
