@@ -63,8 +63,6 @@ def delete_expense(expense_id):
 
 def summary_expenses(month= None):
     expenses = load_expenses()
-    print(type(month))
-
 
     if month:
         totalAmountList = [expense['amount'] for expense in expenses if get_expense_month(expense) == month]
@@ -120,8 +118,6 @@ def run():
         delete_expense(args.id)
     elif args.command == 'summary':
         summary_expenses(args.month)
-# Resumen de gastos 
-# Resumen de gastos por mes
 
 if __name__ == '__main__':
     run()
