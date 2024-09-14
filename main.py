@@ -1,9 +1,12 @@
 import argparse
 import json
 from datetime import datetime
+import csv
 
 EXPENSE_FILE = "expenses.json"
+EXPORT_FILE = "expenses.csv"
 BUDGET_FILE = "budget.json"
+FIELD_NAMES = ['id','description','amount','category','date']
 
 # Utils Methods
 def load_expenses():
@@ -133,6 +136,19 @@ def check_budget(month):
     else:
         print(f"Total expenses for month {month}: ${total_expenses}")
 
+
+# export methods
+def export_file(filename):
+    expenses = load_expenses()
+    with open(filename, 'w', newline='') as csvile:       
+        writter = csv.DictWriter(csvile, fieldnames=FIELD_NAMES)
+        writter.writeheader()
+        for expense in expenses:
+            writter.writerow(expense)
+
+    print(f"Expenses exported to {filename} successfully!")
+
+
 def run():
     parser = argparse.ArgumentParser(description='Expense Tracker Project')
     subparsers = parser.add_subparsers(dest='command')
@@ -171,6 +187,10 @@ def run():
     budget_parser.add_argument('--month', required=True, type=int, help="month for the budget")
     budget_parser.add_argument('--amount', required=True, type=float, help="budget amount for the month")
 
+    # Subcmd for export in csv
+    csv_parser = subparsers.add_parser('export', help="to export expenses in csv")
+    csv_parser.add_argument('-f','--filename', default=EXPORT_FILE, help="name of file to export data") 
+
     args = parser.parse_args()
 
     if args.command == 'add':
@@ -186,7 +206,10 @@ def run():
     elif args.command == 'budget':
         set_budget(args.month,args.amount)       
     elif args.command == 'check-budget':
-        check_budget(args.month)              
+        check_budget(args.month)     
+    elif args.command == 'export':
+        export_file(args.filename)              
+
 
 if __name__ == '__main__':
     run()
