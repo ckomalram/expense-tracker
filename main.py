@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 
 EXPENSE_FILE = "expenses.json"
+BUDGET_FILE = "budget.json"
 
 # Utils Methods
 def load_expenses():
@@ -89,6 +90,49 @@ def summary_expenses(month= None):
         totalSum = sum(totalAmountList)
         print(f'Total Expenses:  {totalSum}')
 
+# Budget Methods
+def load_budget():
+    try:
+        with open(BUDGET_FILE, 'r') as file:
+            budget = json.load(file)
+    except FileNotFoundError:
+        budget = []
+    return budget
+
+def save_budget(budget):
+    with open(BUDGET_FILE, 'w') as file:
+        json.dump(budget, file, indent=4)
+
+def set_budget(month, amount):
+    budgets = load_budget()
+    budget = [budget for budget in budgets if budget['month'] == month]
+    if budget:
+        budget[0]['amount'] = amount
+    else:
+        new_budget = {
+            'month': month,
+            'amount': amount
+        }
+        budgets.append(new_budget)
+
+    save_budget(budgets)
+    print(f"Budget set for month {month}: ${amount}")
+
+def check_budget(month):
+    budgets = load_budget()
+    expenses = load_expenses() 
+    budget = [budget for budget in budgets if budget['month'] == month]   
+    total_expenses = sum(expense['amount'] for expense in expenses if datetime.strptime(expense['date'], '%Y-%m-%d').month == month)
+    
+    if  not budget:
+        print(f"Budget for month {month} not found. please set.")
+        return
+    elif  total_expenses > budget[0]['month']:
+        print(f"Warning: You have exceeded your budget for month {month}!")
+        print(f"Total expenses: ${total_expenses}, Budget: ${budget[0]['month']}")
+    else:
+        print(f"Total expenses for month {month}: ${total_expenses}")
+
 def run():
     parser = argparse.ArgumentParser(description='Expense Tracker Project')
     subparsers = parser.add_subparsers(dest='command')
@@ -119,6 +163,14 @@ def run():
     summary_parser = subparsers.add_parser('summary', help="show summary of expenses")
     summary_parser.add_argument('-m', '--month',type=int,help='argument to show summary by month')
 
+    # Subcmd to initialize budget
+    check_budget_parser= subparsers.add_parser('check-budget', help="check monthly budget")
+    check_budget_parser.add_argument('--month', required=True, type=int, help="month for the budget")
+
+    budget_parser = subparsers.add_parser('budget', help="Set monthly budget")
+    budget_parser.add_argument('--month', required=True, type=int, help="month for the budget")
+    budget_parser.add_argument('--amount', required=True, type=float, help="budget amount for the month")
+
     args = parser.parse_args()
 
     if args.command == 'add':
@@ -131,6 +183,10 @@ def run():
         delete_expense(args.id)
     elif args.command == 'summary':
         summary_expenses(args.month)
+    elif args.command == 'budget':
+        set_budget(args.month,args.amount)       
+    elif args.command == 'check-budget':
+        check_budget(args.month)              
 
 if __name__ == '__main__':
     run()
